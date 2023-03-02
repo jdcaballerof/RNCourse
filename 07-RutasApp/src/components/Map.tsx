@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react'
 import { Text, View } from 'react-native';
 import { Location } from '../interfaces/appInterfaces';
 
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import { useLocation } from '../hooks/useLocation';
 import { LoadingScreen } from '../screens/Loading';
 import { MyBtnOpacity } from './MyBtnOpacity';
@@ -11,16 +11,18 @@ import { MyBtnOpacity } from './MyBtnOpacity';
 
 export const Map = ( ) => { 
 
-    const { hasLocation, initPosition, userLocation, getUserLocation, followUser, stopFollowUser } = useLocation();
+    const { hasLocation, initPosition, userLocation, routeLines, getUserLocation, followUser, stopFollowUser } = useLocation();
 
     const mapViewRef = useRef<MapView>()
+    const isfollowUser = useRef(true)
 
     const centerPosicion = async() => {
 
         const location = await getUserLocation()
         mapViewRef.current?.animateCamera({
             center: location
-        })
+        });
+        isfollowUser.current = true;
     }
 
     useEffect(() => {
@@ -33,11 +35,14 @@ export const Map = ( ) => {
     }, [])
 
     useEffect(() => {
+
+        if(!isfollowUser.current) return
+
         const { latitude, longitude } = userLocation
 
         mapViewRef.current?.animateCamera({
             center: {latitude, longitude},
-            zoom: 15    //entre 2 y 20
+            // zoom: 15    //entre 2 y 20
         })
       
     }, [userLocation])
@@ -64,7 +69,10 @@ return (
                     latitudeDelta: 0.0922,
                     longitudeDelta: 0.0421,
                 }}
+                onTouchStart={ () => {isfollowUser.current=false} }
             >
+
+                <Polyline coordinates={routeLines} strokeColor='black' strokeWidth={3} />
                 <Marker 
                     // image={ require('../assets/...') }
                     coordinate={{
@@ -73,16 +81,19 @@ return (
                         // longitude: 37.78825,
                         longitude: -99.156113,
                     }}
-                    title='Titulo'
-                    description='Esto es mi descripcion'
+                    // title='Titulo'
+                    // description='Esto es mi descripcion'
                 />
             </MapView>
 
-            <View style={ {flexDirection: 'row-reverse', position: 'relative', bottom: 55, right: 15  } } >
+        { !isfollowUser.current &&
+
+            <View style={ {flexDirection: 'row-reverse', position: 'relative', bottom: 55, right: 15, height: 0  } } >
                 <MyBtnOpacity iconName='target' bgColor='rgba(128, 0, 128, 0.55)' fontColor='black' 
                     onPress={ () => centerPosicion() } 
-                />
+                    />
             </View>
+        }
 
         </View>
 

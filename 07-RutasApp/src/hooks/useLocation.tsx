@@ -15,6 +15,7 @@ export const useLocation = () => {
     longitude: 0,
     latitude: 0
   })
+  const [routeLines, setRouteLines] = useState<Location[]>([])
 
 
     useEffect(() => {
@@ -35,6 +36,7 @@ export const useLocation = () => {
               setInitPosition(res)
               setUserLocation(res)
               setHasLocation(true)
+              setRouteLines( routes => [ ...routes, res ] )
             } )
             
     }, [])
@@ -61,10 +63,12 @@ export const useLocation = () => {
         
         watchId.current = Geolocation.watchPosition(
           ({coords}) => {
-            setUserLocation({
-              latitude: coords.latitude, 
-              longitude: coords.longitude
-            })
+
+            const actualLocation = { latitude: coords.latitude, longitude: coords.longitude } 
+
+            setUserLocation(actualLocation)
+            setRouteLines( routes => [ ...routes, actualLocation ] )
+
           },
           (err) => console.log(err), {
             enableHighAccuracy: true,
@@ -84,6 +88,7 @@ export const useLocation = () => {
     hasLocation,
     initPosition,
     userLocation,
+    routeLines,
     followUser,
     stopFollowUser,
     getUserLocation,
